@@ -74,26 +74,18 @@ Name: "fileassoc"; Description: "Associate video file types with IINA"; GroupDes
 Name: "contextmenu"; Description: "Add ""Open with IINA"" to context menu"; GroupDescription: "Integration:"; Flags: checkedonce
 
 [Files]
-; Main executable
+; All build output (exe, DLLs, Qt plugins, QML modules, etc.)
+; windeployqt places everything in the build directory with subdirs
+; like platforms/, imageformats/, tls/, qml/, etc.
 Source: "..\build\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-
-; Qt runtime DLLs (deployed by windeployqt)
-Source: "..\build\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
-
-; Qt plugins and QML modules
-Source: "..\build\Release\plugins\*"; DestDir: "{app}\plugins"; Flags: ignoreversion recursesubdirs
-Source: "..\build\Release\qml\*"; DestDir: "{app}\qml"; Flags: ignoreversion recursesubdirs
-
-; Translations
-Source: "..\build\Release\translations\*"; DestDir: "{app}\translations"; Flags: ignoreversion recursesubdirs
-
-; Resources
-Source: "..\build\Release\resources\*"; DestDir: "{app}\resources"; Flags: ignoreversion recursesubdirs
+Source: "..\build\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion
+; Qt plugin subdirectories (platforms, imageformats, tls, etc.)
+Source: "..\build\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.lib,*.exp,*.obj,*.pdb,*.ilk"
 
 ; Documentation
 Source: "..\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\THIRD_PARTY_LICENSES.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\THIRD_PARTY_LICENSES.txt"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 
 [Icons]
 ; Start Menu shortcuts
