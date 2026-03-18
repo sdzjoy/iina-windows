@@ -4,10 +4,11 @@
 #include <QQuickFramebufferObject>
 #include <QOpenGLFramebufferObject>
 
+// Qt 6.7 requires fully-defined types for Q_PROPERTY metatype registration
+#include "core/mpvengine.h"
+
 struct mpv_handle;
 struct mpv_render_context;
-
-class MpvEngine;
 
 class MpvObject : public QQuickFramebufferObject
 {

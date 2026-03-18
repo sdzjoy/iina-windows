@@ -174,7 +174,10 @@ try {
     }
 
     if ($winsparkleHeader) {
-        Copy-Item $winsparkleHeader.FullName $IncludeDir -Force
+        # WinSparkle header goes to deps/include/ (not deps/include/mpv/)
+        # because WINSPARKLE_INCLUDE_DIR is set to deps/include in CMakeLists.txt
+        $winsparkleIncDir = Join-Path $DepsDir "include"
+        Copy-Item $winsparkleHeader.FullName $winsparkleIncDir -Force
         Write-Host "  - winsparkle.h"
     } else {
         Write-Warning "winsparkle.h not found"

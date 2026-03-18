@@ -6,7 +6,9 @@
 #include <QUrl>
 #include <QTimer>
 
-class MpvEngine;
+// Qt 6.7 requires fully-defined types for Q_PROPERTY metatype registration
+#include "core/mpvengine.h"
+
 class HistoryModel;
 
 class PlayerCore : public QObject

@@ -95,7 +95,7 @@ void SubtitleSearch::searchByQuery(const QString &query, const QString &lang)
 
 void SubtitleSearch::downloadSubtitle(const QString &url, const QString &savePath)
 {
-    QNetworkRequest req(QUrl(url));
+    QNetworkRequest req{QUrl(url)};
     req.setRawHeader("User-Agent", "IINA-Windows v0.1.0");
 
     auto *reply = m_nam.get(req);

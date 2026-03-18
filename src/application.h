@@ -4,13 +4,14 @@
 #include <QObject>
 #include <QQmlApplicationEngine>
 
-class PlayerCore;
-class PlaylistModel;
-class ChapterModel;
-class TrackModel;
-class HistoryModel;
-class ShortcutManager;
-class SubtitleSearch;
+// Qt 6.7 requires fully-defined types for Q_PROPERTY metatype registration
+#include "core/playercore.h"
+#include "core/shortcutmanager.h"
+#include "core/subtitlesearch.h"
+#include "models/playlistmodel.h"
+#include "models/chaptermodel.h"
+#include "models/trackmodel.h"
+#include "models/historymodel.h"
 
 class Application : public QObject
 {
