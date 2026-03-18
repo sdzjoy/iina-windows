@@ -6,7 +6,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$ProjectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+# $PSScriptRoot = <repo>/scripts, so one Split-Path gives <repo>
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
 if (-not $ProjectRoot) { $ProjectRoot = Get-Location }
 
 $DepsDir = Join-Path $ProjectRoot "deps"
@@ -29,7 +30,12 @@ $mpvArchive = Join-Path $TempDir "mpv-dev.7z"
 
 Write-Host "Downloading libmpv development files..."
 if (-not (Test-Path $mpvArchive) -or ((Get-Item $mpvArchive).LastWriteTime -lt (Get-Date).AddDays(-7))) {
-    Invoke-WebRequest -Uri $mpvUrl -OutFile $mpvArchive -MaximumRedirection 5 -UserAgent "Mozilla/5.0"
+    # Use curl.exe (built into Windows 10+) because Invoke-WebRequest
+    # often fails on SourceForge redirects, returning HTML instead of the file.
+    curl.exe -L -o $mpvArchive $mpvUrl
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to download libmpv (curl exit code: $LASTEXITCODE)"
+    }
 }
 
 Write-Host "Extracting..."
@@ -71,7 +77,11 @@ $winsparkleUrl = "https://github.com/vslavik/winsparkle/releases/download/v0.8.1
 $winsparkleArchive = Join-Path $TempDir "winsparkle.zip"
 
 try {
-    Invoke-WebRequest -Uri $winsparkleUrl -OutFile $winsparkleArchive -MaximumRedirection 5 -UserAgent "Mozilla/5.0"
+    # GitHub releases redirect fine with curl.exe
+    curl.exe -L -o $winsparkleArchive $winsparkleUrl
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to download WinSparkle (curl exit code: $LASTEXITCODE)"
+    }
 
     Write-Host "Extracting WinSparkle..."
     $winsparkleExtract = Join-Path $TempDir "winsparkle"

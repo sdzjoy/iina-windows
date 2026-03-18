@@ -45,21 +45,15 @@ jobs:
           arch: 'win64_msvc2019_64'
           modules: 'qtmultimedia qtshadertools'
 
-      - name: Download libmpv
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Download dependencies (libmpv + WinSparkle)
         shell: pwsh
         run: |
-          $mpvUrl = "https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-latest.7z/download"
-          Invoke-WebRequest -Uri $mpvUrl -OutFile mpv-dev.7z -MaximumRedirection 5
-          7z x mpv-dev.7z -o"mpv-dev"
-
-          New-Item -ItemType Directory -Force -Path deps/lib
-          New-Item -ItemType Directory -Force -Path deps/include/mpv
-          Copy-Item mpv-dev/libmpv-2.dll deps/lib/
-          Copy-Item mpv-dev/mpv.lib deps/lib/ -ErrorAction SilentlyContinue
-          if (-not (Test-Path deps/lib/mpv.lib)) {
-            Copy-Item mpv-dev/libmpv.dll.a deps/lib/mpv.lib -ErrorAction SilentlyContinue
-          }
-          Copy-Item mpv-dev/include/mpv/*.h deps/include/mpv/
+          .\scripts\download-deps.ps1
 
       - name: Configure CMake
         run: |
@@ -75,6 +69,9 @@ jobs:
         run: |
           windeployqt --release --qmldir qml "build/Release/iina-windows.exe"
           Copy-Item deps/lib/libmpv-2.dll "build/Release/"
+          if (Test-Path deps/lib/WinSparkle.dll) {
+            Copy-Item deps/lib/WinSparkle.dll "build/Release/"
+          }
 
       # ── Installer ──
       - name: Install InnoSetup
