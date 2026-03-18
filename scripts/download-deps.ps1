@@ -167,20 +167,19 @@ try {
         Write-Warning "WinSparkle.lib not found - you may need to generate it"
     }
 
-    # Copy header to deps/include/ (WINSPARKLE_INCLUDE_DIR in CMakeLists.txt)
+    # Copy ALL headers to deps/include/ (WINSPARKLE_INCLUDE_DIR in CMakeLists.txt)
     $winsparkleIncDir = Join-Path $DepsDir "include"
-    $winsparkleHeader = Join-Path $winsparkleRoot.FullName "include" "winsparkle.h"
-    if (Test-Path $winsparkleHeader) {
-        Copy-Item $winsparkleHeader $winsparkleIncDir -Force
-        Write-Host "  - winsparkle.h"
+    $wsHeaderDir = Join-Path $winsparkleRoot.FullName "include"
+    if (Test-Path $wsHeaderDir) {
+        Get-ChildItem $wsHeaderDir -Filter "*.h" | ForEach-Object {
+            Copy-Item $_.FullName $winsparkleIncDir -Force
+            Write-Host "  - $($_.Name)"
+        }
     } else {
         # Search recursively as fallback
-        $found = Get-ChildItem $winsparkleRoot.FullName -Filter "winsparkle.h" -Recurse | Select-Object -First 1
-        if ($found) {
-            Copy-Item $found.FullName $winsparkleIncDir -Force
-            Write-Host "  - winsparkle.h (found at $($found.FullName))"
-        } else {
-            Write-Warning "winsparkle.h not found"
+        Get-ChildItem $winsparkleRoot.FullName -Filter "winsparkle*.h" -Recurse | ForEach-Object {
+            Copy-Item $_.FullName $winsparkleIncDir -Force
+            Write-Host "  - $($_.Name) (found at $($_.FullName))"
         }
     }
 
