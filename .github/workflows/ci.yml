@@ -1,0 +1,387 @@
+name: Windows Build
+
+on:
+  push:
+    branches: [main, develop]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main, develop]
+
+env:
+  QT_VERSION: '6.7.*'
+  PROJECT_VERSION: '0.1.0'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+
+    outputs:
+      artifact_name: ${{ steps.package.outputs.artifact_name }}
+      installer_name: ${{ steps.installer.outputs.installer_name }}
+      portable_name: ${{ steps.portable.outputs.portable_name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt 6
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_msvc2019_64'
+          modules: 'qtmultimedia qtshadertools'
+          cache: true
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Download dependencies (libmpv + WinSparkle)
+        shell: pwsh
+        run: |
+          .\scripts\download-deps.ps1
+
+      - name: Extract version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          echo "PROJECT_VERSION=$version" >> $env:GITHUB_ENV
+          echo "Version from tag: $version"
+
+      - name: Update CMakeLists.txt version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $content = Get-Content CMakeLists.txt -Raw
+          $content = $content -replace 'VERSION \d+\.\d+\.\d+', "VERSION ${{ env.PROJECT_VERSION }}"
+          Set-Content CMakeLists.txt $content
+
+      - name: Configure CMake (${{ matrix.build_type }})
+        run: |
+          cmake -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}" `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+      - name: Build (${{ matrix.build_type }})
+        run: cmake --build build --config ${{ matrix.build_type }} --parallel
+
+      - name: Deploy Qt (${{ matrix.build_type }})
+        shell: pwsh
+        run: |
+          $buildDir = "build/${{ matrix.build_type }}"
+          windeployqt --${{ matrix.build_type == 'Release' && 'release' || 'debug' }} --qmldir qml "$buildDir/iina-windows.exe"
+
+          # Copy runtime DLLs
+          Copy-Item deps/lib/libmpv-2.dll "$buildDir/"
+
+          # Copy WinSparkle if available
+          if (Test-Path deps/lib/WinSparkle.dll) {
+            Copy-Item deps/lib/WinSparkle.dll "$buildDir/"
+          }
+
+      - name: Run tests (Debug only)
+        if: matrix.build_type == 'Debug'
+        shell: pwsh
+        run: |
+          # Add test execution here when tests are available
+          Write-Host "Tests would run here (not implemented yet)"
+
+      - name: Install InnoSetup
+        if: matrix.build_type == 'Release'
+        shell: pwsh
+        run: |
+          choco install innosetup -y
+
+      - name: Create application icon
+        if: matrix.build_type == 'Release'
+        shell: pwsh
+        run: |
+          # Convert SVG to ICO using ImageMagick (if available) or skip
+          # For now, create a placeholder or use existing icon
+          Write-Host "Icon creation step (placeholder)"
+          # In production, you'd convert resources/icons/iina.svg to .ico
+
+      - name: Build InnoSetup installer
+        if: matrix.build_type == 'Release'
+        id: installer
+        shell: pwsh
+        run: |
+          # Ensure dist directory exists
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+
+          # Run InnoSetup compiler
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\iina-windows.iss
+
+          # Check if installer was created
+          $installerPath = "dist\IINA-Windows-${{ env.PROJECT_VERSION }}-Setup.exe"
+          if (Test-Path $installerPath) {
+            Write-Host "Installer created: $installerPath"
+            $installerName = Split-Path $installerPath -Leaf
+            echo "installer_name=$installerName" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Error "Installer not found at $installerPath"
+            exit 1
+          }
+
+      - name: Package portable ZIP
+        if: matrix.build_type == 'Release'
+        id: portable
+        shell: pwsh
+        run: |
+          .\scripts\package-portable.ps1 -BuildDir "build\Release" -Version "${{ env.PROJECT_VERSION }}"
+
+          $portableName = "IINA-Windows-${{ env.PROJECT_VERSION }}-Portable.zip"
+          if (Test-Path "dist\$portableName") {
+            echo "portable_name=$portableName" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Error "Portable package not found"
+            exit 1
+          }
+
+      - name: Code signing placeholder
+        if: matrix.build_type == 'Release' && startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          Write-Host "========================================="
+          Write-Host "CODE SIGNING PLACEHOLDER"
+          Write-Host "========================================="
+          Write-Host ""
+          Write-Host "To enable code signing for production releases:"
+          Write-Host "1. Obtain an Authenticode code signing certificate"
+          Write-Host "2. Store certificate as GitHub secret (CODESIGN_CERT_BASE64)"
+          Write-Host "3. Store certificate password as GitHub secret (CODESIGN_CERT_PASSWORD)"
+          Write-Host "4. Uncomment signing steps below"
+          Write-Host ""
+          Write-Host "Example signing command:"
+          Write-Host '  signtool sign /f cert.pfx /p "${{ secrets.CODESIGN_CERT_PASSWORD }}" \'
+          Write-Host '    /t http://timestamp.digicert.com \'
+          Write-Host '    /d "IINA for Windows" \'
+          Write-Host '    "dist\IINA-Windows-${{ env.PROJECT_VERSION }}-Setup.exe"'
+          Write-Host ""
+          Write-Host "Files that should be signed:"
+          Write-Host "  - build\Release\iina-windows.exe"
+          Write-Host "  - dist\IINA-Windows-${{ env.PROJECT_VERSION }}-Setup.exe"
+          Write-Host ""
+
+      # Uncomment these steps when you have a code signing certificate
+      # - name: Decode certificate
+      #   if: matrix.build_type == 'Release' && startsWith(github.ref, 'refs/tags/v')
+      #   shell: pwsh
+      #   run: |
+      #     $cert = "${{ secrets.CODESIGN_CERT_BASE64 }}"
+      #     [IO.File]::WriteAllBytes("cert.pfx", [Convert]::FromBase64String($cert))
+      #
+      # - name: Sign executable
+      #   if: matrix.build_type == 'Release' && startsWith(github.ref, 'refs/tags/v')
+      #   shell: pwsh
+      #   run: |
+      #     & "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign `
+      #       /f cert.pfx `
+      #       /p "${{ secrets.CODESIGN_CERT_PASSWORD }}" `
+      #       /t http://timestamp.digicert.com `
+      #       /d "IINA for Windows" `
+      #       /du "https://iina.io" `
+      #       build\Release\iina-windows.exe
+      #
+      # - name: Sign installer
+      #   if: matrix.build_type == 'Release' && startsWith(github.ref, 'refs/tags/v')
+      #   shell: pwsh
+      #   run: |
+      #     & "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign `
+      #       /f cert.pfx `
+      #       /p "${{ secrets.CODESIGN_CERT_PASSWORD }}" `
+      #       /t http://timestamp.digicert.com `
+      #       /d "IINA for Windows Installer" `
+      #       /du "https://iina.io" `
+      #       "dist\IINA-Windows-${{ env.PROJECT_VERSION }}-Setup.exe"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: IINA-Windows-${{ matrix.build_type }}
+          path: |
+            build/${{ matrix.build_type }}/iina-windows.exe
+            build/${{ matrix.build_type }}/*.dll
+            build/${{ matrix.build_type }}/plugins/
+            build/${{ matrix.build_type }}/qml/
+            build/${{ matrix.build_type }}/translations/
+          retention-days: 30
+
+      - name: Upload installer artifact
+        if: matrix.build_type == 'Release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: IINA-Windows-Installer
+          path: dist/IINA-Windows-${{ env.PROJECT_VERSION }}-Setup.exe
+          retention-days: 90
+
+      - name: Upload portable artifact
+        if: matrix.build_type == 'Release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: IINA-Windows-Portable
+          path: dist/IINA-Windows-${{ env.PROJECT_VERSION }}-Portable.zip
+          retention-days: 90
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download installer artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: IINA-Windows-Installer
+          path: dist/
+
+      - name: Download portable artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: IINA-Windows-Portable
+          path: dist/
+
+      - name: Extract version from tag
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          echo "PROJECT_VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: Generate release notes
+        shell: pwsh
+        run: |
+          $version = "${{ env.PROJECT_VERSION }}"
+          $releaseNotes = @"
+          # IINA for Windows $version
+
+          ## Downloads
+
+          - **Installer**: IINA-Windows-$version-Setup.exe (recommended)
+            - Installs to Program Files
+            - File associations and context menu integration
+            - Start menu shortcuts
+            - Automatic updates (WinSparkle)
+
+          - **Portable**: IINA-Windows-$version-Portable.zip
+            - Run from any location without installation
+            - Settings stored locally
+            - No registry modifications
+
+          ## What's New
+
+          See [CHANGELOG.md](https://github.com/iina/iina-windows/blob/main/CHANGELOG.md) for detailed changes.
+
+          ## System Requirements
+
+          - Windows 10 or later (64-bit)
+          - No additional dependencies required
+
+          ## Installation
+
+          ### Installer
+          1. Download IINA-Windows-$version-Setup.exe
+          2. Run the installer
+          3. Follow the installation wizard
+          4. Launch from Start Menu
+
+          ### Portable
+          1. Download IINA-Windows-$version-Portable.zip
+          2. Extract to any folder
+          3. Run iina-windows.exe
+
+          ## Known Issues
+
+          - First launch may take a few seconds
+          - Some antivirus software may flag the installer (false positive)
+
+          ## Support
+
+          - Report issues: https://github.com/iina/iina-windows/issues
+          - Documentation: https://github.com/iina/iina-windows/wiki
+
+          ---
+
+          **Checksums** (SHA256):
+          "@
+
+          # Calculate checksums
+          Get-ChildItem dist -Filter "*.exe","*.zip" | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
+            $releaseNotes += "`n- ``$($_.Name)``: ``$hash``"
+          }
+
+          $releaseNotes | Out-File -FilePath release_notes.md -Encoding UTF8
+
+      - name: Update appcast.xml
+        shell: pwsh
+        run: |
+          $version = "${{ env.PROJECT_VERSION }}"
+          $installerPath = "dist\IINA-Windows-$version-Setup.exe"
+          $installerSize = (Get-Item $installerPath).Length
+          $date = Get-Date -Format "ddd, dd MMM yyyy HH:mm:ss +0000"
+
+          Write-Host "Appcast update info:"
+          Write-Host "  Version: $version"
+          Write-Host "  Size: $installerSize bytes"
+          Write-Host "  Date: $date"
+          Write-Host ""
+          Write-Host "Add this to installer/appcast.xml:"
+          Write-Host ""
+          Write-Host @"
+              <item>
+                <title>Version $version</title>
+                <sparkle:releaseNotesLink>https://github.com/iina/iina-windows/releases/tag/v$version</sparkle:releaseNotesLink>
+                <pubDate>$date</pubDate>
+                <enclosure
+                  url="https://github.com/iina/iina-windows/releases/download/v$version/IINA-Windows-$version-Setup.exe"
+                  sparkle:version="$version"
+                  sparkle:shortVersionString="$version"
+                  length="$installerSize"
+                  type="application/octet-stream"
+                  sparkle:os="windows-x64"
+                />
+                <sparkle:minimumSystemVersion>10.0.0</sparkle:minimumSystemVersion>
+              </item>
+          "@
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/IINA-Windows-${{ env.PROJECT_VERSION }}-Setup.exe
+            dist/IINA-Windows-${{ env.PROJECT_VERSION }}-Portable.zip
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post-release instructions
+        shell: pwsh
+        run: |
+          Write-Host "========================================="
+          Write-Host "RELEASE PUBLISHED SUCCESSFULLY!"
+          Write-Host "========================================="
+          Write-Host ""
+          Write-Host "Next steps:"
+          Write-Host "1. Update installer/appcast.xml with the version info shown above"
+          Write-Host "2. Commit and push the updated appcast.xml"
+          Write-Host "3. Deploy appcast.xml to https://iina.io/appcast.xml"
+          Write-Host "4. Verify auto-update works by running an older version"
+          Write-Host ""
+          Write-Host "Release URL: https://github.com/iina/iina-windows/releases/tag/${{ github.ref_name }}"

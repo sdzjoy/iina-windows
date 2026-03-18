@@ -1,0 +1,114 @@
+IINA for Windows - Third-Party Licenses
+========================================
+
+This application includes the following third-party components:
+
+1. mpv
+   License: GPL-2.0-or-later
+   Website: https://mpv.io/
+   Source:  https://github.com/mpv-player/mpv
+   Copyright (C) mpv contributors
+
+2. FFmpeg (libavcodec, libavformat, libavutil, libswscale, libswresample, libavfilter)
+   License: GPL-2.0-or-later (with GPL-enabled build options)
+   Website: https://ffmpeg.org/
+   Source:  https://github.com/FFmpeg/FFmpeg
+   Copyright (C) FFmpeg contributors
+
+3. Qt Framework
+   License: LGPL-3.0
+   Website: https://www.qt.io/
+   Source:  https://code.qt.io/
+   Copyright (C) The Qt Company Ltd.
+   Used under LGPL-3.0 with dynamic linking.
+
+4. libass
+   License: ISC
+   Source:  https://github.com/libass/libass
+   Copyright (C) libass contributors
+
+5. libplacebo
+   License: LGPL-2.1-or-later
+   Source:  https://code.videolan.org/videolan/libplacebo
+   Copyright (C) libplacebo contributors
+
+6. dav1d
+   License: BSD-2-Clause
+   Source:  https://code.videolan.org/videolan/dav1d
+   Copyright (C) dav1d contributors
+
+7. HarfBuzz
+   License: MIT
+   Source:  https://github.com/harfbuzz/harfbuzz
+   Copyright (C) HarfBuzz contributors
+
+8. FreeType
+   License: FTL (FreeType License) or GPL-2.0
+   Source:  https://freetype.org/
+   Copyright (C) The FreeType Project
+
+9. FriBidi
+   License: LGPL-2.1-or-later
+   Source:  https://github.com/fribidi/fribidi
+   Copyright (C) FriBidi contributors
+
+10. zlib
+    License: zlib License
+    Source:  https://www.zlib.net/
+    Copyright (C) 1995-2024 Jean-loup Gailly and Mark Adler
+
+11. libjpeg-turbo
+    License: BSD-3-Clause / IJG
+    Source:  https://libjpeg-turbo.org/
+    Copyright (C) libjpeg-turbo contributors
+
+12. libpng
+    License: libpng License
+    Source:  http://www.libpng.org/
+    Copyright (C) libpng contributors
+
+13. libwebp
+    License: BSD-3-Clause
+    Source:  https://chromium.googlesource.com/webm/libwebp
+    Copyright (C) Google Inc.
+
+14. libvpx
+    License: BSD-3-Clause
+    Source:  https://chromium.googlesource.com/webm/libvpx
+    Copyright (C) Google Inc.
+
+15. Opus
+    License: BSD-3-Clause
+    Source:  https://opus-codec.org/
+    Copyright (C) Xiph.Org Foundation
+
+16. Rubberband
+    License: GPL-2.0-or-later
+    Source:  https://breakfastquay.com/rubberband/
+    Copyright (C) Particular Programs Ltd.
+
+17. SoXR
+    License: LGPL-2.1-or-later
+    Source:  https://sourceforge.net/projects/soxr/
+    Copyright (C) Rob Sykes
+
+18. LuaJIT
+    License: MIT
+    Source:  https://luajit.org/
+    Copyright (C) 2005-2023 Mike Pall
+
+19. MuJS
+    License: ISC
+    Source:  https://mujs.com/
+    Copyright (C) Artifex Software
+
+20. GnuTLS
+    License: LGPL-2.1-or-later
+    Source:  https://www.gnutls.org/
+    Copyright (C) Free Software Foundation
+
+---
+
+All licenses are compatible with the GPL-3.0 under which this
+application is distributed. Full license texts for each dependency
+are available in their respective source repositories.

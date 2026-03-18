@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>IINA for Windows Updates</title>
+    <link>https://iina.io/appcast.xml</link>
+    <description>Most recent updates to IINA for Windows</description>
+    <language>en</language>
+
+    <!-- Example release entry - replace with actual release information -->
+    <item>
+      <title>Version 0.2.0</title>
+      <sparkle:releaseNotesLink>https://github.com/iina/iina-windows/releases/tag/v0.2.0</sparkle:releaseNotesLink>
+      <pubDate>Wed, 18 Mar 2026 12:00:00 +0000</pubDate>
+      <enclosure
+        url="https://github.com/iina/iina-windows/releases/download/v0.2.0/IINA-Windows-0.2.0-Setup.exe"
+        sparkle:version="0.2.0"
+        sparkle:shortVersionString="0.2.0"
+        length="52428800"
+        type="application/octet-stream"
+        sparkle:os="windows-x64"
+      />
+      <sparkle:minimumSystemVersion>10.0.0</sparkle:minimumSystemVersion>
+    </item>
+
+    <item>
+      <title>Version 0.1.0</title>
+      <sparkle:releaseNotesLink>https://github.com/iina/iina-windows/releases/tag/v0.1.0</sparkle:releaseNotesLink>
+      <pubDate>Mon, 10 Mar 2026 12:00:00 +0000</pubDate>
+      <enclosure
+        url="https://github.com/iina/iina-windows/releases/download/v0.1.0/IINA-Windows-0.1.0-Setup.exe"
+        sparkle:version="0.1.0"
+        sparkle:shortVersionString="0.1.0"
+        length="51200000"
+        type="application/octet-stream"
+        sparkle:os="windows-x64"
+      />
+      <sparkle:minimumSystemVersion>10.0.0</sparkle:minimumSystemVersion>
+    </item>
+
+  </channel>
+</rss>
+
+<!--
+APPCAST.XML MAINTENANCE GUIDE
+==============================
+
+This file provides update information to WinSparkle for auto-updates.
+It should be hosted at a stable URL (e.g., https://iina.io/appcast.xml).
+
+Field Descriptions:
+-------------------
+
+<title> - Version name shown to users
+<sparkle:releaseNotesLink> - URL to release notes (GitHub release page recommended)
+<pubDate> - Publication date in RFC 822 format
+<enclosure url> - Direct download URL to the installer (.exe)
+<sparkle:version> - Version number (must match CMakeLists.txt version)
+<sparkle:shortVersionString> - User-visible version string
+<length> - File size in bytes (get with: (Get-Item installer.exe).Length)
+<type> - MIME type (always "application/octet-stream" for .exe)
+<sparkle:os> - Target OS (always "windows-x64" for our builds)
+<sparkle:minimumSystemVersion> - Minimum Windows version (10.0.0 = Windows 10)
+
+How to Add a New Release:
+--------------------------
+
+1. Build and test the new version
+2. Upload installer to GitHub Releases:
+   - Tag: v0.2.0
+   - File: IINA-Windows-0.2.0-Setup.exe
+
+3. Get the file size:
+   PowerShell: (Get-Item IINA-Windows-0.2.0-Setup.exe).Length
+   Output: 52428800
+
+4. Add new <item> block at the TOP of the channel (newest first)
+
+5. Update fields:
+   - <title>Version 0.2.0</title>
+   - <sparkle:releaseNotesLink>https://github.com/iina/iina-windows/releases/tag/v0.2.0</sparkle:releaseNotesLink>
+   - <pubDate>$(Get-Date -Format 'ddd, dd MMM yyyy HH:mm:ss +0000')</pubDate>
+   - <enclosure url>https://github.com/iina/iina-windows/releases/download/v0.2.0/IINA-Windows-0.2.0-Setup.exe</enclosure>
+   - sparkle:version="0.2.0"
+   - sparkle:shortVersionString="0.2.0"
+   - length="52428800"
+
+6. Validate XML:
+   - Check well-formedness: https://www.xmlvalidation.com/
+   - Test in WinSparkle: Run app and check for updates
+
+7. Deploy:
+   - Upload appcast.xml to your web server
+   - Ensure URL matches what's in autoupdate.cpp initialize() call
+   - Verify HTTPS is used (required for security)
+
+Important Notes:
+----------------
+- ALWAYS use HTTPS for security
+- Keep items in reverse chronological order (newest first)
+- File size MUST be accurate (WinSparkle verifies downloads)
+- Version comparison is alphanumeric (0.2.0 > 0.1.0, but 0.10.0 > 0.2.0)
+- Test updates on a clean VM before releasing
+
+Automation with CI/CD:
+----------------------
+See .github/workflows/release.yml for automated appcast generation.
+The workflow can auto-update this file when creating GitHub releases.
+
+Security:
+---------
+- Sign installers with Authenticode for production releases
+- Use HTTPS for appcast URL (prevents MITM attacks)
+- Consider adding sparkle:dsaSignature for extra verification
+
+Example CI/CD appcast generation:
+```powershell
+$version = "0.2.0"
+$url = "https://github.com/iina/iina-windows/releases/download/v$version/IINA-Windows-$version-Setup.exe"
+$length = (Get-Item "IINA-Windows-$version-Setup.exe").Length
+$date = Get-Date -Format "ddd, dd MMM yyyy HH:mm:ss +0000"
+
+# Insert into appcast.xml programmatically
+```
+
+-->
