@@ -63,7 +63,9 @@ UninstallFilesDir={app}\uninst
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
-Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+; Chinese Simplified requires ChineseSimplified.isl from Inno Setup Languages pack
+; Uncomment the next line if the language file is available
+;Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
