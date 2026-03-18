@@ -207,12 +207,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: IINA-Windows-${{ matrix.build_type }}
-          path: |
-            build/${{ matrix.build_type }}/iina-windows.exe
-            build/${{ matrix.build_type }}/*.dll
-            build/${{ matrix.build_type }}/plugins/
-            build/${{ matrix.build_type }}/qml/
-            build/${{ matrix.build_type }}/translations/
+          path: build/${{ matrix.build_type }}/
           retention-days: 30
 
       - name: Upload installer artifact
