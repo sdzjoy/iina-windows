@@ -83,7 +83,15 @@ set(MAIN_SOURCES
     src/application.h
 )
 
-# QML Resources
+# Create the executable target first (required for qt_add_qml_module)
+qt_add_executable(iina-windows
+    ${CORE_SOURCES}
+    ${MODEL_SOURCES}
+    ${UTIL_SOURCES}
+    ${MAIN_SOURCES}
+)
+
+# Add QML module to the executable
 qt_add_qml_module(iina-windows
     URI IINAWindows
     VERSION 1.0
@@ -102,11 +110,6 @@ qt_add_qml_module(iina-windows
         qml/components/FilterPanel.qml
         qml/pages/SettingsPage.qml
         qml/pages/ShortcutSettings.qml
-    SOURCES
-        ${CORE_SOURCES}
-        ${MODEL_SOURCES}
-        ${UTIL_SOURCES}
-        ${MAIN_SOURCES}
     RESOURCES
         resources/icons/iina.svg
         resources/icons/play.svg
