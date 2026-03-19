@@ -61,28 +61,11 @@ Get-ChildItem $BuildDirAbs -Filter "*.dll" | ForEach-Object {
     Copy-Item $_.FullName $PortableTempDir -Force
 }
 
-# Copy Qt plugins
-if (Test-Path (Join-Path $BuildDirAbs "plugins")) {
-    Write-Host "  - Qt plugins"
-    Copy-Item (Join-Path $BuildDirAbs "plugins") $PortableTempDir -Recurse -Force
-}
-
-# Copy QML modules
-if (Test-Path (Join-Path $BuildDirAbs "qml")) {
-    Write-Host "  - QML modules"
-    Copy-Item (Join-Path $BuildDirAbs "qml") $PortableTempDir -Recurse -Force
-}
-
-# Copy translations
-if (Test-Path (Join-Path $BuildDirAbs "translations")) {
-    Write-Host "  - Translations"
-    Copy-Item (Join-Path $BuildDirAbs "translations") $PortableTempDir -Recurse -Force
-}
-
-# Copy resources if present
-if (Test-Path (Join-Path $BuildDirAbs "resources")) {
-    Write-Host "  - Resources"
-    Copy-Item (Join-Path $BuildDirAbs "resources") $PortableTempDir -Recurse -Force
+# Copy ALL subdirectories from the build dir (platforms/, imageformats/,
+# tls/, styles/, qml/, translations/, etc. created by windeployqt)
+Get-ChildItem $BuildDirAbs -Directory | ForEach-Object {
+    Write-Host "  - $($_.Name)/"
+    Copy-Item $_.FullName $PortableTempDir -Recurse -Force
 }
 
 Write-Host "Adding documentation..." -ForegroundColor Green
